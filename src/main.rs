@@ -1,6 +1,10 @@
-use clap::Parser;
+mod code_writer;
+mod parser;
 
-#[derive(Parser, Debug)]
+use clap::Parser as ClapParser;
+use parser::Parser;
+
+#[derive(ClapParser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
     /// Name of the file.
