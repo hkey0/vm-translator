@@ -4,16 +4,16 @@ use std::io::{BufRead, BufReader};
 
 #[derive(Default)]
 pub struct Parser {
-    lines: Vec<String>,
+    pub lines: Vec<String>,
 
     // Current command
-    command: CommandType,
+    pub command: CommandType,
 
     // First argument of the current line
-    arg1: String,
+    pub arg1: String,
 
     // Second argument of the current line
-    arg2: u32,
+    pub arg2: u32,
 }
 
 impl Parser {

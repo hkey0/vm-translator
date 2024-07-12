@@ -3,6 +3,8 @@ mod parser;
 
 use clap::Parser as ClapParser;
 use parser::Parser;
+use std::fs::File;
+use std::io::{Result, Write};
 
 #[derive(ClapParser, Debug)]
 #[command(version, about, long_about = None)]
@@ -14,5 +16,20 @@ struct Args {
 
 fn main() {
     let args = Args::parse();
-    println!("{:?}", args);
+    let mut parser = Parser::new(&args.file_name);
+    let mut cw = code_writer::CodeWriter::new();
+    let mut lines = vec![];
+
+    while parser.has_more_commands() {
+        lines.push(format!("// {}", parser.lines[0]));
+        parser.advance();
+        let cmd = cw.advance(parser.command.clone(), parser.arg1.clone(), parser.arg2);
+        println!("{:?}", cmd);
+        lines.extend(cmd);
+    }
+
+    let mut file = File::create(format!("{}.asm", &args.file_name.replace(".vm", ""))).unwrap();
+    for line in lines {
+        writeln!(file, "{}", line).unwrap()
+    }
 }
