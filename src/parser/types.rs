@@ -38,22 +38,21 @@ impl Command {
             ["label", arg1] => Command {
                 command_type: CommandType::C_LABEL,
                 arg1: arg1.to_string(),
-                arg2: 0,
+                ..Default::default()
             },
             ["if-goto", arg1] => Command {
                 command_type: CommandType::C_IF,
                 arg1: arg1.to_string(),
-                arg2: 0,
+                ..Default::default()
             },
             [arith] => Command {
                 command_type: CommandType::C_ARITHMETIC,
                 arg1: arith.to_string(),
-                arg2: 0,
+                ..Default::default()
             },
             _ => Command {
                 command_type: CommandType::NULL,
-                arg1: String::new(),
-                arg2: 0,
+                ..Default::default()
             },
         }
     }

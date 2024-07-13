@@ -33,6 +33,7 @@ impl CodeWriter {
         let mut seg_name = String::new();
         let mut arg2 = arg2;
         let mut da = false;
+        // move this to types.rs
         match arg1.as_str() {
             "local" => seg_name = "LCL".to_string(),
             "argument" => seg_name = "ARG".to_string(),
