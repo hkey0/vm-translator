@@ -60,9 +60,14 @@ impl CodeWriter {
             CommandType::C_ARITHMETIC => self.write_arithmetic(command.arg1),
             CommandType::C_IF => self.write_if(command.arg1),
             CommandType::C_LABEL => self.write_label(command.arg1),
+            CommandType::C_GOTO => self.write_goto(command.arg1),
             CommandType::NULL => vec![],
             _ => panic!("Invalid command"),
         }
+    }
+
+    fn write_goto(&mut self, name: String) -> Vec<String> {
+        vec![format!("@{}", name), "0;JMP".to_string()]
     }
 
     fn write_label(&mut self, name: String) -> Vec<String> {

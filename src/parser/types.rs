@@ -45,6 +45,11 @@ impl Command {
                 arg1: arg1.to_string(),
                 ..Default::default()
             },
+            ["goto", arg1] => Command {
+                command_type: CommandType::C_GOTO,
+                arg1: arg1.to_string(),
+                ..Default::default()
+            },
             [arith] => Command {
                 command_type: CommandType::C_ARITHMETIC,
                 arg1: arith.to_string(),
