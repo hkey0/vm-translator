@@ -17,7 +17,8 @@ struct Args {
 fn main() {
     let args = Args::parse();
     let mut parser = Parser::new(&args.file_name);
-    let mut cw = code_writer::CodeWriter::new();
+    let project_name = &args.file_name.replace(".vm", "");
+    let mut cw = code_writer::CodeWriter::new(project_name.to_string());
     let mut lines = vec![];
 
     while parser.has_more_commands() {
@@ -28,7 +29,7 @@ fn main() {
         lines.extend(cmd);
     }
 
-    let mut file = File::create(format!("{}.asm", &args.file_name.replace(".vm", ""))).unwrap();
+    let mut file = File::create(format!("{}.asm", project_name)).unwrap();
     for line in lines {
         writeln!(file, "{}", line).unwrap()
     }

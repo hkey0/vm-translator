@@ -2,25 +2,29 @@ use super::parser::CommandType;
 
 pub struct CodeWriter {
     counter: u64,
+    project_name: String,
 }
 
 impl CodeWriter {
-    pub fn new() -> Self {
-        Self { counter: 0 }
+    pub fn new(project_name: String) -> Self {
+        Self {
+            counter: 0,
+            project_name,
+        }
     }
 
     pub fn write_arithmetic(&mut self, operator: String) -> Vec<String> {
         match operator.as_str() {
             "add" => Self::operate_two("+"),
             "sub" => Self::operate_two("-"),
-            "eq" => self.compare("JEQ"),
-            "gt" => self.compare("JGT"),
-            "lt" => self.compare("JLT"),
             "and" => Self::operate_two("&"),
             "or" => Self::operate_two("|"),
             "neg" => Self::operate_one("-"),
             "not" => Self::operate_one("!"),
-            _ => todo!(),
+            "eq" => self.compare("JEQ"),
+            "gt" => self.compare("JGT"),
+            "lt" => self.compare("JLT"),
+            _ => panic!("Unknown arithmetical symbol."),
         }
     }
 
@@ -43,17 +47,35 @@ impl CodeWriter {
                 da = true;
                 arg2 = 0;
             }
-            "static" => seg_name = format!("StaticTest.{}", arg2),
+            "static" => seg_name = format!("{}.{}", self.project_name, arg2),
             "temp" => seg_name = "5".to_string(),
-            _ => panic!(""),
+            _ => (), // panic!(""),
         };
 
         match command {
             CommandType::C_PUSH => Self::push_segment(seg_name, arg2, da),
             CommandType::C_POP => Self::pop_segment(seg_name, arg2, da),
             CommandType::C_ARITHMETIC { command } => self.write_arithmetic(command),
+            CommandType::C_IF { name } => self.write_if(name),
+            CommandType::C_LABEL { name } => self.write_label(name),
             _ => panic!("Invalid command"),
         }
+    }
+
+    fn write_label(&mut self, name: String) -> Vec<String> {
+        let mut instructions: Vec<String> = vec![];
+        instructions.push(format!("({})", name).to_string());
+        instructions
+    }
+
+    fn write_if(&mut self, name: String) -> Vec<String> {
+        let mut instructions: Vec<String> = vec![];
+        instructions.push("@SP".to_string());
+        instructions.push("AM=M-1".to_string());
+        instructions.push("D=M".to_string());
+        instructions.push(format!("@{}", name).to_string());
+        instructions.push("D;JGT".to_string());
+        instructions
     }
 
     fn compare(&mut self, cond: &str) -> Vec<String> {
@@ -77,7 +99,6 @@ impl CodeWriter {
         instructions.push("@SP".to_string());
         instructions.push("A=M-1".to_string());
         instructions.push("M=D".to_string());
-        // Self::decrease_sp(&mut instructions);
         self.counter += 1;
 
         instructions

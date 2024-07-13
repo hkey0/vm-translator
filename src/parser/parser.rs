@@ -38,6 +38,21 @@ impl Parser {
             let command = parts[0].parse::<CommandType>().unwrap();
             self.command = command;
             return;
+        } else if parts.len() == 2 {
+            match parts[0] {
+                "if-goto" => {
+                    self.command = CommandType::C_IF {
+                        name: parts[1].to_string(),
+                    }
+                }
+                "label" => {
+                    self.command = CommandType::C_LABEL {
+                        name: parts[1].to_string(),
+                    }
+                }
+                _ => panic!(),
+            }
+            return;
         } else if parts.len() != 3 && self.has_more_commands() {
             return self.advance();
         }

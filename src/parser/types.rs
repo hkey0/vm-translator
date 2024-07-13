@@ -7,9 +7,13 @@ pub enum CommandType {
     },
     C_PUSH,
     C_POP,
-    C_LABEL,
+    C_LABEL {
+        name: String,
+    },
+    C_IF {
+        name: String,
+    },
     C_GOTO,
-    C_IF,
     C_FUNCTION,
     C_RETURN,
     C_CALL,
