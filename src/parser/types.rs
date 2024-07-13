@@ -1,18 +1,19 @@
 use std::str::FromStr;
 
 #[derive(Debug, PartialEq, Default, Clone)]
+pub struct Command {
+    pub command_type: CommandType,
+    pub arg1: String,
+    pub arg2: u32,
+}
+
+#[derive(Debug, PartialEq, Default, Clone)]
 pub enum CommandType {
-    C_ARITHMETIC {
-        command: String,
-    },
+    C_ARITHMETIC,
     C_PUSH,
     C_POP,
-    C_LABEL {
-        name: String,
-    },
-    C_IF {
-        name: String,
-    },
+    C_LABEL,
+    C_IF,
     C_GOTO,
     C_FUNCTION,
     C_RETURN,
@@ -21,18 +22,39 @@ pub enum CommandType {
     NULL,
 }
 
-impl FromStr for CommandType {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let lows = s.to_lowercase();
-        match lows.as_str() {
-            "push" => Ok(Self::C_PUSH),
-            "pop" => Ok(Self::C_POP),
-            "add" | "sub" | "neg" | "eq" | "gt" | "lt" | "and" | "or" | "not" => {
-                Ok(Self::C_ARITHMETIC { command: lows })
-            }
-            _ => Err("Slap".to_string()),
+impl Command {
+    pub fn new(text: &str) -> Self {
+        match text.split_whitespace().collect::<Vec<_>>().as_slice() {
+            ["push", arg1, arg2] => Command {
+                command_type: CommandType::C_PUSH,
+                arg1: arg1.to_string(),
+                arg2: arg2.parse::<u32>().unwrap(),
+            },
+            ["pop", arg1, arg2] => Command {
+                command_type: CommandType::C_POP,
+                arg1: arg1.to_string(),
+                arg2: arg2.parse::<u32>().unwrap(),
+            },
+            ["label", arg1] => Command {
+                command_type: CommandType::C_LABEL,
+                arg1: arg1.to_string(),
+                arg2: 0,
+            },
+            ["if-goto", arg1] => Command {
+                command_type: CommandType::C_IF,
+                arg1: arg1.to_string(),
+                arg2: 0,
+            },
+            [arith] => Command {
+                command_type: CommandType::C_ARITHMETIC,
+                arg1: arith.to_string(),
+                arg2: 0,
+            },
+            _ => Command {
+                command_type: CommandType::NULL,
+                arg1: String::new(),
+                arg2: 0,
+            },
         }
     }
 }

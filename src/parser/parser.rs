@@ -1,5 +1,5 @@
 #![allow(dead_code)]
-use super::types::CommandType;
+use super::types::{Command, CommandType};
 use std::io::{BufRead, BufReader};
 
 #[derive(Default)]
@@ -7,7 +7,10 @@ pub struct Parser {
     pub lines: Vec<String>,
 
     // Current command
-    pub command: CommandType,
+    pub command: Command,
+
+    // Current command type
+    pub command_type: CommandType,
 
     // First argument of the current line
     pub arg1: String,
@@ -33,33 +36,16 @@ impl Parser {
         let mut line = self.lines.remove(0);
         line = line.split("//").next().unwrap_or("").trim().to_string();
 
-        let parts: Vec<&str> = line.split_whitespace().collect();
-        if parts.len() == 1 {
-            let command = parts[0].parse::<CommandType>().unwrap();
-            self.command = command;
-            return;
-        } else if parts.len() == 2 {
-            match parts[0] {
-                "if-goto" => {
-                    self.command = CommandType::C_IF {
-                        name: parts[1].to_string(),
-                    }
-                }
-                "label" => {
-                    self.command = CommandType::C_LABEL {
-                        name: parts[1].to_string(),
-                    }
-                }
-                _ => panic!(),
-            }
-            return;
-        } else if parts.len() != 3 && self.has_more_commands() {
+        // let parts: Vec<&str> = line.split_whitespace().collect();
+        let command = Command::new(&line);
+        if command.command_type == CommandType::NULL && self.has_more_commands() {
             return self.advance();
         }
 
-        self.command = parts[0].parse::<CommandType>().unwrap();
-        self.arg1 = parts[1].to_string(); // target stack
-        self.arg2 = parts[2].parse::<u32>().unwrap(); // index
+        self.command = command.clone();
+        self.command_type = command.command_type.clone();
+        self.arg1 = command.arg1.clone(); // target stack
+        self.arg2 = command.arg2.clone(); // index
     }
 
     pub fn has_more_commands(&self) -> bool {

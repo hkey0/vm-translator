@@ -1,4 +1,4 @@
-use super::parser::CommandType;
+use super::parser::{Command, CommandType};
 
 pub struct CodeWriter {
     counter: u64,
@@ -28,7 +28,8 @@ impl CodeWriter {
         }
     }
 
-    pub fn advance(&mut self, command: CommandType, arg1: String, arg2: u32) -> Vec<String> {
+    pub fn advance(&mut self, command: Command, arg1: String, arg2: u32) -> Vec<String> {
+        println!("code_writer; {:?}", command.command_type);
         let mut seg_name = String::new();
         let mut arg2 = arg2;
         let mut da = false;
@@ -52,12 +53,13 @@ impl CodeWriter {
             _ => (), // panic!(""),
         };
 
-        match command {
+        match command.command_type {
             CommandType::C_PUSH => Self::push_segment(seg_name, arg2, da),
             CommandType::C_POP => Self::pop_segment(seg_name, arg2, da),
-            CommandType::C_ARITHMETIC { command } => self.write_arithmetic(command),
-            CommandType::C_IF { name } => self.write_if(name),
-            CommandType::C_LABEL { name } => self.write_label(name),
+            CommandType::C_ARITHMETIC => self.write_arithmetic(command.arg1),
+            CommandType::C_IF => self.write_if(command.arg1),
+            CommandType::C_LABEL => self.write_label(command.arg1),
+            CommandType::NULL => vec![],
             _ => panic!("Invalid command"),
         }
     }
