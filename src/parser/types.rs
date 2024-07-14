@@ -50,6 +50,20 @@ impl Command {
                 arg1: arg1.to_string(),
                 ..Default::default()
             },
+            ["call", function_name, n_args] => Command {
+                command_type: CommandType::C_CALL,
+                arg1: function_name.to_string(),
+                arg2: n_args.parse::<u32>().unwrap(),
+            },
+            ["function", function_name, local_vars] => Command {
+                command_type: CommandType::C_FUNCTION,
+                arg1: function_name.to_string(),
+                arg2: local_vars.parse::<u32>().unwrap(),
+            },
+            ["return"] => Command {
+                command_type: CommandType::C_RETURN,
+                ..Default::default()
+            },
             [arith] => Command {
                 command_type: CommandType::C_ARITHMETIC,
                 arg1: arith.to_string(),

@@ -61,9 +61,144 @@ impl CodeWriter {
             CommandType::C_IF => self.write_if(command.arg1),
             CommandType::C_LABEL => self.write_label(command.arg1),
             CommandType::C_GOTO => self.write_goto(command.arg1),
+            CommandType::C_CALL => self.write_call(command.arg1, command.arg2),
+            CommandType::C_FUNCTION => self.write_function(command.arg1, command.arg2),
+            CommandType::C_RETURN => self.write_return(),
             CommandType::NULL => vec![],
             _ => panic!("Invalid command"),
         }
+    }
+
+    fn write_return(&mut self) -> Vec<String> {
+        let mut instructions: Vec<String> = vec![];
+        // endFrame = LCL
+        instructions.push("@LCL".to_string());
+        instructions.push("D=M".to_string());
+        instructions.push(format!("@endFrame{}", self.counter));
+        instructions.push("M=D".to_string());
+        // set retAddr
+        instructions.push(format!("@endFrame{}", self.counter));
+        instructions.push("D=M".to_string());
+        instructions.push("@5".to_string());
+        instructions.push("D=D-A".to_string());
+        instructions.push("A=D".to_string());
+        instructions.push("D=M".to_string());
+        instructions.push(format!("@retAddr{}", self.counter));
+        instructions.push("M=D".to_string());
+        // *ARG = pop() -> pop arg 0
+        let ins = Self::pop_segment("ARG".to_string(), 0, false);
+        instructions.extend(ins);
+        // SP = ARG + 1
+        instructions.push("@ARG".to_string());
+        instructions.push("D=M".to_string());
+        instructions.push("@SP".to_string());
+        instructions.push("M=D+1".to_string());
+        // restore THAT
+        self.restore_n(
+            &mut instructions,
+            "THAT",
+            1,
+            format!("endFrame{}", self.counter),
+        );
+        // restore THIS
+        self.restore_n(
+            &mut instructions,
+            "THIS",
+            2,
+            format!("endFrame{}", self.counter),
+        );
+        // restore ARG
+        self.restore_n(
+            &mut instructions,
+            "ARG",
+            3,
+            format!("endFrame{}", self.counter),
+        );
+        // restore LOCAL
+        self.restore_n(
+            &mut instructions,
+            "LCL",
+            4,
+            format!("endFrame{}", self.counter),
+        );
+        // jump to return address
+        instructions.push(format!("@retAddr{}", self.counter));
+        instructions.push("A=M".to_string());
+        instructions.push("0;JMP".to_string());
+        self.counter += 1;
+
+        instructions
+    }
+
+    fn restore_n(&mut self, instructions: &mut Vec<String>, name: &str, n: u32, endframe: String) {
+        instructions.push(format!("@{}", endframe));
+        instructions.push("D=M".to_string());
+        // @n
+        instructions.push(format!("@{}", n));
+        instructions.push("D=D-A".to_string());
+
+        instructions.push("A=D".to_string());
+        instructions.push("D=M".to_string());
+        instructions.push(format!("@{}", name));
+        instructions.push("M=D".to_string());
+    }
+
+    fn write_function(&mut self, function_name: String, local_vars: u32) -> Vec<String> {
+        let mut instructions: Vec<String> = vec![];
+        instructions.push(format!("({})", function_name));
+        // push local n times
+        for _i in 0..local_vars {
+            let pushes = Self::push_segment("constant".to_string(), 0, false);
+            instructions.extend(pushes);
+        }
+
+        instructions
+    }
+
+    fn write_call(&mut self, function_name: String, n_args: u32) -> Vec<String> {
+        let mut instructions: Vec<String> = vec![];
+        // push return address
+        Self::push_seg(
+            format!("@returnbabaniyo{}", self.counter),
+            0,
+            true,
+            &mut instructions,
+        );
+        Self::increase_sp(&mut instructions);
+        // save LCL val
+        Self::push_seg("@LCL".to_string(), 0, false, &mut instructions);
+        Self::increase_sp(&mut instructions);
+        // save ARG
+        Self::push_seg("@ARG".to_string(), 0, false, &mut instructions);
+        Self::increase_sp(&mut instructions);
+        // save THIS
+        Self::push_seg("@THIS".to_string(), 0, false, &mut instructions);
+        Self::increase_sp(&mut instructions);
+        // save THAT
+        Self::push_seg("@THAT".to_string(), 0, false, &mut instructions);
+        Self::increase_sp(&mut instructions);
+        // set ARG to SP-5-nArgs
+        instructions.push("@SP".to_string());
+        instructions.push("D=M".to_string());
+        instructions.push("@5".to_string());
+        instructions.push("D=D-A".to_string());
+        instructions.push(format!("@{}", n_args));
+        instructions.push("D=D-A".to_string());
+        instructions.push("@ARG".to_string());
+        instructions.push("M=D".to_string());
+
+        // LCL = SP
+        instructions.push("@SP".to_string());
+        instructions.push("D=M".to_string());
+        instructions.push("@LCL".to_string());
+        instructions.push("M=D".to_string());
+        // goto functionName
+        instructions.push(format!("@{}", function_name));
+        instructions.push("0;JMP".to_string());
+
+        instructions.push(format!("(returnbabaniyo{})", self.counter));
+        self.counter += 1;
+        instructions
     }
 
     fn write_goto(&mut self, name: String) -> Vec<String> {
