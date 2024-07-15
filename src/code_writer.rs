@@ -156,15 +156,6 @@ impl CodeWriter {
     fn write_call(&mut self, function_name: String, n_args: u32) -> Vec<String> {
         let mut instructions: Vec<String> = vec![];
         // push return address
-        /*
-        Self::push_seg(
-            format!("returnbabaniyo{}", self.counter),
-            0,
-            true,
-            &mut instructions,
-        );
-        */
-
         instructions.push(format!("@{function_name}$ret.{}", self.counter));
         instructions.push("D=A".to_string());
         instructions.push("@SP".to_string());

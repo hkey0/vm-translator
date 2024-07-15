@@ -19,31 +19,23 @@ struct Args {
 fn main() {
     let args = Args::parse();
     let mut parser = Parser::new();
-    let project_name = &args.folder_name; // .replace(".vm", "");
+    let project_name = &args.folder_name;
     let mut cw = code_writer::CodeWriter::new(project_name.to_string());
     let mut lines = vec![];
 
-    lines.push("@256".to_string());
-    lines.push("D=A".to_string());
-    lines.push("@SP".to_string());
-    lines.push("M=D".to_string());
+    boot_stack_pointer(&mut lines);
 
     let path = Path::new(project_name);
     for entry in fs::read_dir(path).unwrap() {
         let file_path = entry.unwrap().path();
         println!("{}", file_path.display());
         if file_path.to_str().unwrap().ends_with(".vm") {
-            parser.set_file(file_path.to_str().unwrap());
-            cw.set_current_file(file_path.to_str().unwrap());
-            lines.push(format!("// {}", file_path.to_str().unwrap()).to_string());
-
-            while parser.has_more_commands() {
-                lines.push(format!("// {}", parser.lines[0]));
-                parser.advance();
-                let cmd = cw.advance(parser.command.clone(), parser.arg1.clone(), parser.arg2);
-                println!("{:?}", cmd);
-                lines.extend(cmd);
-            }
+            process_file(
+                &mut parser,
+                &mut cw,
+                &mut lines,
+                file_path.to_str().unwrap(),
+            );
         }
     }
 
@@ -53,4 +45,27 @@ fn main() {
     }
 }
 
-fn process_file() {}
+fn process_file(
+    parser: &mut Parser,
+    cw: &mut code_writer::CodeWriter,
+    lines: &mut Vec<String>,
+    file_path: &str,
+) {
+    parser.set_file(file_path);
+    cw.set_current_file(file_path);
+    lines.push(format!("// {}", file_path));
+
+    while parser.has_more_commands() {
+        lines.push(format!("// {}", parser.lines[0]));
+        parser.advance();
+        let cmd = cw.advance(parser.command.clone(), parser.arg1.clone(), parser.arg2);
+        println!("{:?}", cmd);
+        lines.extend(cmd);
+    }
+}
+fn boot_stack_pointer(lines: &mut Vec<String>) {
+    lines.push("@256".to_string());
+    lines.push("D=A".to_string());
+    lines.push("@SP".to_string());
+    lines.push("M=D".to_string());
+}
