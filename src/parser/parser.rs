@@ -29,13 +29,16 @@ impl Parser {
         let reader = BufReader::new(file);
 
         self.lines = reader.lines().collect::<Result<_, _>>().unwrap();
+        // call Sys.init when processing Sys.vm file
+        if file_name.contains("Sys.vm") {
+            self.lines.insert(0, "call Sys.init 0".to_string());
+        }
     }
 
     pub fn advance(&mut self) {
         let mut line = self.lines.remove(0);
         line = line.split("//").next().unwrap_or("").trim().to_string();
 
-        // let parts: Vec<&str> = line.split_whitespace().collect();
         let command = Command::new(&line);
         if command.command_type == CommandType::NULL && self.has_more_commands() {
             return self.advance();

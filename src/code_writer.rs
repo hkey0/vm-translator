@@ -148,15 +148,6 @@ impl CodeWriter {
         for _i in 0..local_vars {
             let pushes = Self::push_segment("constant".to_string(), 0, false);
             instructions.extend(pushes);
-            /*
-            instructions.push("@0".to_string());
-            instructions.push("D=A".to_string());
-            instructions.push("@SP".to_string());
-            instructions.push("A=M".to_string());
-            instructions.push("M=D".to_string());
-            instructions.push("@SP".to_string());
-            instructions.push("M=M+1".to_string());
-            */
         }
 
         instructions
