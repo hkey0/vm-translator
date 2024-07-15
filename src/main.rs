@@ -65,6 +65,7 @@ fn process_file(
         lines.extend(cmd);
     }
 }
+
 fn boot_stack_pointer(lines: &mut Vec<String>) {
     lines.push("@256".to_string());
     lines.push("D=A".to_string());
