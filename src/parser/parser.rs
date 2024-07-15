@@ -20,16 +20,15 @@ pub struct Parser {
 }
 
 impl Parser {
-    pub fn new(file_name: &str) -> Self {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn set_file(&mut self, file_name: &str) {
         let file = std::fs::File::open(file_name).unwrap();
         let reader = BufReader::new(file);
 
-        let lines: Vec<String> = reader.lines().collect::<Result<_, _>>().unwrap();
-
-        Self {
-            lines,
-            ..Default::default()
-        }
+        self.lines = reader.lines().collect::<Result<_, _>>().unwrap();
     }
 
     pub fn advance(&mut self) {

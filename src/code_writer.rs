@@ -1,8 +1,10 @@
 use super::parser::{Command, CommandType};
 
+#[derive(Debug, Default)]
 pub struct CodeWriter {
     counter: u64,
-    project_name: String,
+    pub project_name: String,
+    pub current_file: String,
 }
 
 impl CodeWriter {
@@ -10,7 +12,12 @@ impl CodeWriter {
         Self {
             counter: 0,
             project_name,
+            ..Default::default()
         }
+    }
+
+    pub fn set_current_file(&mut self, file_name: &str) {
+        self.current_file = file_name.split('/').collect::<Vec<_>>()[1].to_string();
     }
 
     pub fn write_arithmetic(&mut self, operator: String) -> Vec<String> {
@@ -49,7 +56,7 @@ impl CodeWriter {
                 da = true;
                 arg2 = 0;
             }
-            "static" => seg_name = format!("{}.{}", self.project_name, arg2),
+            "static" => seg_name = format!("{}.{}", self.current_file, arg2),
             "temp" => seg_name = "5".to_string(),
             _ => (), // panic!(""),
         };
@@ -65,7 +72,6 @@ impl CodeWriter {
             CommandType::C_FUNCTION => self.write_function(command.arg1, command.arg2),
             CommandType::C_RETURN => self.write_return(),
             CommandType::NULL => vec![],
-            _ => panic!("Invalid command"),
         }
     }
 
@@ -74,55 +80,47 @@ impl CodeWriter {
         // endFrame = LCL
         instructions.push("@LCL".to_string());
         instructions.push("D=M".to_string());
-        instructions.push(format!("@endFrame{}", self.counter));
+        instructions.push("@endFrame".to_string());
         instructions.push("M=D".to_string());
         // set retAddr
-        instructions.push(format!("@endFrame{}", self.counter));
-        instructions.push("D=M".to_string());
         instructions.push("@5".to_string());
         instructions.push("D=D-A".to_string());
-        instructions.push("A=D".to_string());
+        instructions.push("@retAddr".to_string());
+        instructions.push("AM=D".to_string());
         instructions.push("D=M".to_string());
-        instructions.push(format!("@retAddr{}", self.counter));
+        instructions.push("@retAddr".to_string());
         instructions.push("M=D".to_string());
         // *ARG = pop() -> pop arg 0
+        /*
         let ins = Self::pop_segment("ARG".to_string(), 0, false);
+        Self::decrease_sp(&mut instructions);
         instructions.extend(ins);
+        */
+
+        instructions.push("@SP".to_string());
+        instructions.push("M=M-1".to_string());
+        instructions.push("A=M".to_string());
+        instructions.push("D=M".to_string());
+        instructions.push("@ARG".to_string());
+        instructions.push("A=M".to_string());
+        instructions.push("M=D".to_string());
+
         // SP = ARG + 1
         instructions.push("@ARG".to_string());
         instructions.push("D=M".to_string());
+        instructions.push("D=D+1".to_string());
         instructions.push("@SP".to_string());
-        instructions.push("M=D+1".to_string());
+        instructions.push("M=D".to_string());
         // restore THAT
-        self.restore_n(
-            &mut instructions,
-            "THAT",
-            1,
-            format!("endFrame{}", self.counter),
-        );
+        self.restore_n(&mut instructions, "THAT", 1, format!("endFrame"));
         // restore THIS
-        self.restore_n(
-            &mut instructions,
-            "THIS",
-            2,
-            format!("endFrame{}", self.counter),
-        );
+        self.restore_n(&mut instructions, "THIS", 2, format!("endFrame"));
         // restore ARG
-        self.restore_n(
-            &mut instructions,
-            "ARG",
-            3,
-            format!("endFrame{}", self.counter),
-        );
+        self.restore_n(&mut instructions, "ARG", 3, format!("endFrame"));
         // restore LOCAL
-        self.restore_n(
-            &mut instructions,
-            "LCL",
-            4,
-            format!("endFrame{}", self.counter),
-        );
+        self.restore_n(&mut instructions, "LCL", 4, format!("endFrame"));
         // jump to return address
-        instructions.push(format!("@retAddr{}", self.counter));
+        instructions.push("@retAddr".to_string());
         instructions.push("A=M".to_string());
         instructions.push("0;JMP".to_string());
         self.counter += 1;
@@ -145,11 +143,20 @@ impl CodeWriter {
 
     fn write_function(&mut self, function_name: String, local_vars: u32) -> Vec<String> {
         let mut instructions: Vec<String> = vec![];
-        instructions.push(format!("({})", function_name));
+        instructions.push(format!("({function_name})"));
         // push local n times
         for _i in 0..local_vars {
             let pushes = Self::push_segment("constant".to_string(), 0, false);
             instructions.extend(pushes);
+            /*
+            instructions.push("@0".to_string());
+            instructions.push("D=A".to_string());
+            instructions.push("@SP".to_string());
+            instructions.push("A=M".to_string());
+            instructions.push("M=D".to_string());
+            instructions.push("@SP".to_string());
+            instructions.push("M=M+1".to_string());
+            */
         }
 
         instructions
@@ -158,24 +165,52 @@ impl CodeWriter {
     fn write_call(&mut self, function_name: String, n_args: u32) -> Vec<String> {
         let mut instructions: Vec<String> = vec![];
         // push return address
+        /*
         Self::push_seg(
-            format!("@returnbabaniyo{}", self.counter),
+            format!("returnbabaniyo{}", self.counter),
             0,
             true,
             &mut instructions,
         );
+        */
+
+        instructions.push(format!("@{function_name}$ret.{}", self.counter));
+        instructions.push("D=A".to_string());
+        instructions.push("@SP".to_string());
+        instructions.push("A=M".to_string());
+        instructions.push("M=D".to_string());
         Self::increase_sp(&mut instructions);
         // save LCL val
-        Self::push_seg("@LCL".to_string(), 0, false, &mut instructions);
+        // Self::push_seg("LCL".to_string(), 0, false, &mut instructions);
+        instructions.push("@LCL".to_string());
+        instructions.push("D=M".to_string());
+        instructions.push("@SP".to_string());
+        instructions.push("A=M".to_string());
+        instructions.push("M=D".to_string());
         Self::increase_sp(&mut instructions);
         // save ARG
-        Self::push_seg("@ARG".to_string(), 0, false, &mut instructions);
+        // Self::push_seg("ARG".to_string(), 0, false, &mut instructions);
+        instructions.push("@ARG".to_string());
+        instructions.push("D=M".to_string());
+        instructions.push("@SP".to_string());
+        instructions.push("A=M".to_string());
+        instructions.push("M=D".to_string());
         Self::increase_sp(&mut instructions);
         // save THIS
-        Self::push_seg("@THIS".to_string(), 0, false, &mut instructions);
+        // Self::push_seg("THIS".to_string(), 0, false, &mut instructions);
+        instructions.push("@THIS".to_string());
+        instructions.push("D=M".to_string());
+        instructions.push("@SP".to_string());
+        instructions.push("A=M".to_string());
+        instructions.push("M=D".to_string());
         Self::increase_sp(&mut instructions);
         // save THAT
-        Self::push_seg("@THAT".to_string(), 0, false, &mut instructions);
+        // Self::push_seg("THAT".to_string(), 0, false, &mut instructions);
+        instructions.push("@THAT".to_string());
+        instructions.push("D=M".to_string());
+        instructions.push("@SP".to_string());
+        instructions.push("A=M".to_string());
+        instructions.push("M=D".to_string());
         Self::increase_sp(&mut instructions);
         // set ARG to SP-5-nArgs
         instructions.push("@SP".to_string());
@@ -196,7 +231,7 @@ impl CodeWriter {
         instructions.push(format!("@{}", function_name));
         instructions.push("0;JMP".to_string());
 
-        instructions.push(format!("(returnbabaniyo{})", self.counter));
+        instructions.push(format!("({function_name}$ret.{})", self.counter));
         self.counter += 1;
         instructions
     }
@@ -217,7 +252,7 @@ impl CodeWriter {
         instructions.push("AM=M-1".to_string());
         instructions.push("D=M".to_string());
         instructions.push(format!("@{}", name).to_string());
-        instructions.push("D;JGT".to_string());
+        instructions.push("D;JNE".to_string());
         instructions
     }
 
