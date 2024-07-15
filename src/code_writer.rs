@@ -36,11 +36,8 @@ impl CodeWriter {
     }
 
     pub fn advance(&mut self, command: Command, arg1: String, arg2: u32) -> Vec<String> {
-        let mut seg_name = String::new();
         let mut arg2 = arg2;
         let mut da = false;
-        // move this to types.rs
-        println!("command: {}", arg1);
 
         let seg_name = match (arg1.as_str(), arg2) {
             ("local", _) => "LCL".to_string(),
@@ -110,13 +107,13 @@ impl CodeWriter {
         instructions.push("@SP".to_string());
         instructions.push("M=D".to_string());
         // restore THAT
-        self.restore_n(&mut instructions, "THAT", 1, format!("endFrame"));
+        self.restore_n(&mut instructions, "THAT", 1, "endFrame".to_string());
         // restore THIS
-        self.restore_n(&mut instructions, "THIS", 2, format!("endFrame"));
+        self.restore_n(&mut instructions, "THIS", 2, "endFrame".to_string());
         // restore ARG
-        self.restore_n(&mut instructions, "ARG", 3, format!("endFrame"));
+        self.restore_n(&mut instructions, "ARG", 3, "endFrame".to_string());
         // restore LOCAL
-        self.restore_n(&mut instructions, "LCL", 4, format!("endFrame"));
+        self.restore_n(&mut instructions, "LCL", 4, "endFrame".to_string());
         // jump to return address
         instructions.push("@retAddr".to_string());
         instructions.push("A=M".to_string());

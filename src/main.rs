@@ -5,7 +5,7 @@ use clap::Parser as ClapParser;
 use parser::Parser;
 use std::fs;
 use std::fs::File;
-use std::io::{Result, Write};
+use std::io::Write;
 use std::path::Path;
 
 #[derive(ClapParser, Debug)]
