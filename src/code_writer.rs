@@ -40,29 +40,28 @@ impl CodeWriter {
         let mut arg2 = arg2;
         let mut da = false;
         // move this to types.rs
-        match arg1.as_str() {
-            "local" => seg_name = "LCL".to_string(),
-            "argument" => seg_name = "ARG".to_string(),
-            "this" => seg_name = "THIS".to_string(),
-            "that" => seg_name = "THAT".to_string(),
-            "constant" => seg_name = "constant".to_string(),
-            "pointer" => {
-                if arg2 == 0 {
-                    seg_name = "THIS".to_string()
-                } else {
-                    seg_name = "THAT".to_string()
-                }
-                da = true;
-                arg2 = 0;
-            }
-            "static" => seg_name = format!("{}.{}", self.current_file, arg2),
-            "temp" => seg_name = "5".to_string(),
-            _ => (), // panic!(""),
+        println!("command: {}", arg1);
+
+        let seg_name = match (arg1.as_str(), arg2) {
+            ("local", _) => "LCL".to_string(),
+            ("argument", _) => "ARG".to_string(),
+            ("this", _) => "THIS".to_string(),
+            ("that", _) => "THAT".to_string(),
+            ("constant", _) => "constant".to_string(),
+            ("pointer", 0) => "THIS".to_string(),
+            ("pointer", 1) => "THAT".to_string(),
+            ("static", _) => format!("{}.{}", self.current_file, arg2),
+            ("temp", _) => "5".to_string(),
+            _ => String::new(),
         };
+        if arg1.as_str() == "pointer" {
+            arg2 = 0;
+            da = true;
+        }
 
         match command.command_type {
-            CommandType::C_PUSH => Self::push_segment(seg_name, arg2, da),
-            CommandType::C_POP => Self::pop_segment(seg_name, arg2, da),
+            CommandType::C_PUSH => Self::push_segment(seg_name.to_string(), arg2, da),
+            CommandType::C_POP => Self::pop_segment(seg_name.to_string(), arg2, da),
             CommandType::C_ARITHMETIC => self.write_arithmetic(command.arg1),
             CommandType::C_IF => self.write_if(command.arg1),
             CommandType::C_LABEL => self.write_label(command.arg1),
