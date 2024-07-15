@@ -28,7 +28,7 @@ fn main() {
     let path = Path::new(project_name);
     for entry in fs::read_dir(path).unwrap() {
         let file_path = entry.unwrap().path();
-        println!("{}", file_path.display());
+        // println!("{}", file_path.display());
         if file_path.to_str().unwrap().ends_with(".vm") {
             process_file(
                 &mut parser,
@@ -59,7 +59,6 @@ fn process_file(
         lines.push(format!("// {}", parser.lines[0]));
         parser.advance();
         let cmd = cw.advance(parser.command.clone(), parser.arg1.clone(), parser.arg2);
-        println!("{:?}", cmd);
         lines.extend(cmd);
     }
 }

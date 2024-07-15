@@ -36,7 +36,6 @@ impl CodeWriter {
     }
 
     pub fn advance(&mut self, command: Command, arg1: String, arg2: u32) -> Vec<String> {
-        println!("code_writer; {:?}", command.command_type);
         let mut seg_name = String::new();
         let mut arg2 = arg2;
         let mut da = false;
@@ -312,7 +311,6 @@ impl CodeWriter {
     }
 
     fn calculate_seg(seg: String, index: u32, da: bool, instructions: &mut Vec<String>) {
-        println!("calculatoop, {}, {}", seg, index);
         instructions.push(format!("@{}", seg).to_string());
         if seg.as_str() == "5" || da {
             instructions.push("D=A".to_string());
