@@ -85,16 +85,9 @@ impl CodeWriter {
         instructions.push("D=M".to_string());
         instructions.push("@retAddr".to_string());
         instructions.push("M=D".to_string());
-        // *ARG = pop() -> pop arg 0
-        /*
-        let ins = Self::pop_segment("ARG".to_string(), 0, false);
-        Self::decrease_sp(&mut instructions);
-        instructions.extend(ins);
-        */
-
         instructions.push("@SP".to_string());
-        instructions.push("M=M-1".to_string());
-        instructions.push("A=M".to_string());
+        instructions.push("AM=M-1".to_string());
+        // instructions.push("A=M".to_string());
         instructions.push("D=M".to_string());
         instructions.push("@ARG".to_string());
         instructions.push("A=M".to_string());

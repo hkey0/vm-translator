@@ -5,16 +5,12 @@ use std::io::{BufRead, BufReader};
 #[derive(Default)]
 pub struct Parser {
     pub lines: Vec<String>,
-
     // Current command
     pub command: Command,
-
     // Current command type
     pub command_type: CommandType,
-
     // First argument of the current line
     pub arg1: String,
-
     // Second argument of the current line
     pub arg2: u32,
 }

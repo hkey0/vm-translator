@@ -29,7 +29,7 @@ fn main() {
     if !path.is_dir() {
         panic!("Give a valid directory.");
     }
-    for entry in fs::read_dir(path).unwrap() {
+    for entry in fs::read_dir(path).expect("Error when trying to read dir.") {
         let fep = entry.unwrap().path();
         let file_path = fep.to_str().unwrap();
 
